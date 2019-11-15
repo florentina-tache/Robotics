@@ -1,0 +1,67 @@
+const int speakerPin = A0;
+const int buzzerPin = 11;
+const int pushButton = 2;
+int speakerValue = 0;
+const int threshold = 20;
+
+unsigned long previousTime =  0;
+unsigned long currentTime = 0;
+int interval = 10;
+unsigned long previousTimeSound = 0;
+unsigned long currentTimeSound = 0;
+int intervalSound = 5000;
+int intervalDebounce = 50;
+unsigned long lastDebounceTime;
+
+int buzzerTone = 1000;
+int soundState = 0;
+int lastButtonState = 1;
+int reading;
+int buttonState = 1;
+
+
+
+void setup() {
+  pinMode(speakerPin, INPUT);
+  pinMode(pushButton, INPUT_PULLUP);
+  Serial.begin(9600);
+}
+void loop() {
+  currentTime = millis();
+  if (currentTime - previousTime >= interval)
+  {
+    speakerValue = analogRead(speakerPin);
+    if (speakerValue != 0)
+      Serial.println(speakerValue);
+      
+    if (speakerValue > threshold) {
+      //if the sound hasn't started playing and there's a knock we save the time that has passed only once
+      if (soundState == 0) previousTimeSound = millis();
+      soundState = 1;
+      Serial.println("Knock");
+    }
+
+    //if we previously saved the time when we had a knock we start counting how many milliseconds have passed since then
+    if (soundState == 1) currentTimeSound = millis(); 
+    if (currentTimeSound - previousTimeSound >= intervalSound) {
+      tone(buzzerPin, buzzerTone, 500);
+
+    //we stop the sound when the button is pushed using the debouncing method
+      reading = digitalRead(pushButton);
+      Serial.println(reading);
+      if ( reading != lastButtonState)
+        lastDebounceTime = millis();
+      if ( millis() - lastDebounceTime > intervalDebounce)
+      {
+        if ( reading != buttonState)
+          buttonState = reading;
+
+        if (buttonState == LOW )
+          noTone(buzzerPin);
+        soundState = 0;
+      }
+      lastButtonState = reading;
+    }
+    previousTime = currentTime;
+  }
+}
