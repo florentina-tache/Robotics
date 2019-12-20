@@ -34,4 +34,9 @@ If you go to 'Settings' you will be able to choose a three letter name and if yo
 - 7 resistors
 - 1 potentiometer
 
-![alt text](https://drive.google.com/drive/u/0/my-drive)
+Image:
+https://drive.google.com/open?id=1ARI20ZJTNUk-2hJSr2F9gQnhk4O67FMO
+
+Functionalities:
+
+Full story/gameplay:
