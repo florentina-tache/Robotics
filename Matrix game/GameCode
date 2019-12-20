@@ -1,0 +1,1384 @@
+#include<LedControl.h>
+#include<LiquidCrystal.h>
+#include <EEPROM.h>
+LedControl lc = LedControl(12, 11, 10, 1); //DIN, CLK, LOAD //1 -> no driver
+const int RS = 2;
+const int E = 3;
+const int D4 = 4;
+const int D5 = 5;
+const int D6 = 6;
+const int D7 = 7;
+LiquidCrystal lcd(RS, E, D4, D5, D6, D7);
+
+const int redLED = 34;
+const int blueLED = 36;
+const int greenLED = 38;
+const int yellowLED = 40;
+const int whiteLED = 42;
+int stateLED = 0;
+
+const int helpButton = 44;
+const int redButton = 28;
+const int blueButton = 26;
+const int greenButton = 24;
+const int yellowButton = 22;
+const int whiteButton = 30;
+int helpButtonState = 0;
+int redButtonState = 0;
+int blueButtonState = 0;
+int greenButtonState = 0;
+int yellowButtonState = 0;
+int whiteButtonState = 0;
+int helpState = 0;
+int redState = 0;
+int blueState = 0;
+int greenState = 0;
+int yellowState = 0;
+int whiteState = 0;
+int counterPotions = 0;
+int redCheck = 0;
+int blueCheck = 0;
+int greenCheck = 0;
+int yellowCheck = 0;
+int whiteCheck = 0;
+int lastHelpState = 0;
+
+byte customChar[] = {
+  B00000,
+  B01010,
+  B10101,
+  B10001,
+  B01010,
+  B00100,
+  B00000,
+  B00000
+};
+
+int introState = 0;
+uint8_t addressScore = 0;
+uint8_t addressName = 5;
+
+void turnLEDsOn(){
+  digitalWrite(redLED, 1);
+  digitalWrite(blueLED, 1);
+  digitalWrite(greenLED, 1);
+  digitalWrite(yellowLED, 1);
+  digitalWrite(whiteLED, 1);
+}
+
+int wrongPotion = 0;
+int helpMessage = 0;
+
+int helpMenu() {
+  helpState = digitalRead(helpButton);
+  helpState = !helpState;
+  if (helpState != lastHelpState)
+    if (helpState == HIGH) {
+      helpMessage++;
+    }
+  lastHelpState = helpState;
+  if(helpMessage > 3) helpMessage = 0;
+  return helpMessage;
+}
+
+void chooseIngredients() {
+  while (counterPotions < 3) {
+    helpButtonState = digitalRead(helpButton);
+    
+    while(helpMenu() >= 1){
+    if (helpMessage == 1) {
+      lcd.setCursor(0, 0);
+      lcd.print("Red-Love ");
+      lcd.setCursor(0, 1);
+      lcd.print("Blue-Mistery   ");
+    }
+        if (helpMessage == 2) {
+      lcd.setCursor(0, 0);
+      lcd.print("Yellow-Joy     ");
+      lcd.setCursor(0, 1);
+      lcd.print("Green-Nature    ");
+        }
+              if (helpMessage == 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("White-Hope       ");
+      lcd.setCursor(0, 1);
+      lcd.print("                ");
+    }
+    }
+    
+    if (helpMessage == 0) {      
+      lcd.setCursor(0, 0);
+      lcd.print("Choosing              ");
+      lcd.setCursor(0, 1);
+      lcd.print("ingredients...");
+    }
+    
+    
+    redButtonState = digitalRead(redButton);
+    if (redButtonState == LOW) {
+      redState = 1;
+      digitalWrite(redLED, stateLED); //turns the LED off if the button has been pressed
+    }
+    else redState = 0;
+
+    blueButtonState = digitalRead(blueButton);
+    if (blueButtonState == LOW) {
+      blueState = 1;
+      digitalWrite(blueLED, stateLED);
+    }
+    else blueState = 0;
+
+    greenButtonState = digitalRead(greenButton);
+    if (greenButtonState == LOW) {
+      greenState = 1;
+      digitalWrite(greenLED, stateLED);
+    }
+    else greenState = 0;
+
+    yellowButtonState = digitalRead(yellowButton);
+    if (yellowButtonState == LOW) {
+      yellowState = 1;
+      digitalWrite(yellowLED, stateLED);
+    }
+    else yellowState = 0;
+
+    whiteButtonState = digitalRead(whiteButton);
+    if (whiteButtonState == LOW) {
+      whiteState = 1;
+      digitalWrite(whiteLED, stateLED);
+    }
+    else whiteState = 0;
+
+    if (redState == 1 && redCheck == 0) {
+      counterPotions++;
+      redCheck = 1;
+    }
+
+    if (blueState == 1 && blueCheck == 0) {
+      counterPotions++;
+      blueCheck = 1;
+    }
+
+    if (greenState == 1 && greenCheck == 0) {
+      counterPotions++;
+      greenCheck = 1;
+    }
+
+    if (yellowState == 1 && yellowCheck == 0) {
+      counterPotions++;
+      yellowCheck = 1;
+    }
+
+    if (whiteState == 1 && whiteCheck == 0) {
+      counterPotions++;
+      whiteCheck = 1;
+    }
+  }
+  if (counterPotions == 3) {
+    counterPotions = 0;
+  }
+
+}
+
+
+bool clearMatrix[8][8] = {
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+bool arrowUp[8][8] = {
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 1, 1, 1, 1, 0, 0},
+  {0, 1, 1, 1, 1, 1, 1, 0},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0}
+};
+
+bool arrowDown[8][8] = {
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {0, 1, 1, 1, 1, 1, 1, 0},
+  {0, 0, 1, 1, 1, 1, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0}
+};
+
+bool arrowLeft[8][8] = {
+  {0, 0, 0, 1, 0, 0, 0, 0},
+  {0, 0, 1, 1, 0, 0, 0, 0},
+  {0, 1, 1, 1, 0, 0, 0, 0},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {0, 1, 1, 1, 0, 0, 0, 0},
+  {0, 0, 1, 1, 0, 0, 0, 0},
+  {0, 0, 0, 1, 0, 0, 0, 0}
+};
+
+bool arrowRight[8][8] = {
+  {0, 0, 0, 0, 1, 0, 0, 0},
+  {0, 0, 0, 0, 1, 1, 0, 0},
+  {0, 0, 0, 0, 1, 1, 1, 0},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {0, 0, 0, 0, 1, 1, 1, 0},
+  {0, 0, 0, 0, 1, 1, 0, 0},
+  {0, 0, 0, 0, 1, 0, 0, 0}
+};
+
+bool heart[8][8] = {
+  {0, 1, 1, 0, 0, 1, 1, 0},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {0, 1, 1, 1, 1, 1, 1, 0},
+  {0, 0, 1, 1, 1, 1, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+bool ghost[8][8] = {
+  {0, 0, 0, 1, 1, 1, 0, 0},
+  {0, 0, 1, 1, 1, 1, 1, 0},
+  {0, 1, 1, 0, 1, 0, 1, 1},
+  {0, 1, 0, 0, 1, 0, 0, 1},
+  {0, 1, 1, 1, 1, 1, 1, 1},
+  {0, 1, 1, 0, 0, 0, 1, 1},
+  {0, 1, 1, 1, 1, 1, 1, 1},
+  {0, 1, 0, 1, 0, 1, 0, 1}
+};
+
+bool m[8][8] = {
+  {0, 0, 1, 1, 0, 0, 0, 0},
+  {0, 1, 1, 1, 1, 1, 0, 0},
+  {1, 1, 0, 0, 0, 0, 0, 0},
+  {0, 1, 1, 1, 1, 1, 0, 0},
+  {0, 0, 0, 0, 0, 1, 1, 0},
+  {1, 1, 1, 1, 1, 1, 0, 0},
+  {0, 0, 1, 1, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+bool money[8][8] = {
+  {0, 0, 0, 0, 1, 1, 0, 0},
+  {0, 0, 1, 1, 1, 1, 1, 0},
+  {0, 0, 0, 0, 0, 0, 1, 1},
+  {0, 0, 1, 1, 1, 1, 1, 0},
+  {0, 0, 1, 0, 0, 0, 0, 0},
+  {0, 0, 1, 1, 1, 1, 1, 1},
+  {0, 0, 0, 0, 1, 1, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+bool dog[8][8] = {
+  {1, 1, 0, 0, 0, 0, 1, 1},
+  {1, 1, 1, 1, 1, 1, 1, 1},
+  {0, 1, 0, 0, 0, 0, 1, 0},
+  {0, 1, 1, 0, 0, 1, 1, 0},
+  {0, 1, 0, 0, 0, 0, 1, 0},
+  {0, 1, 0, 1, 1, 0, 1, 0},
+  {0, 1, 0, 0, 0, 0, 1, 0},
+  {0, 1, 1, 1, 1, 1, 1, 0}
+};
+
+bool music[8][8] = {
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 1, 0, 1, 0, 0, 0},
+  {0, 0, 0, 0, 1, 0, 0, 0},
+  {0, 0, 0, 0, 1, 0, 0, 0},
+  {0, 0, 0, 0, 1, 1, 0, 0},
+  {0, 0, 0, 0, 1, 1, 1, 0},
+  {0, 0, 0, 0, 0, 1, 1, 0}
+};
+
+bool sadFace[8][8] = {
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 1, 1, 0, 0, 1, 1, 0},
+  {0, 1, 1, 0, 0, 1, 1, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 1, 1, 0, 0, 0},
+  {0, 0, 1, 0, 0, 1, 0, 0}
+};
+
+
+void displayMatrix(bool specificMatrix[8][8]) {
+  for (int row = 0; row < 8; row++)
+    for (int col = 0; col < 8; col++)
+      lc.setLed(0, col, row, specificMatrix[row][col]);
+}
+
+unsigned long lastTime = 0;
+int randomNumber, previousRandomNumber, checkDisplay;;
+
+void displayRandomArrow(int intervalDisplayArrow) {
+  if (millis() - lastTime >= intervalDisplayArrow) {
+    displayMatrix(clearMatrix);
+    randomNumber = random(4);
+    while (randomNumber == previousRandomNumber) {
+      randomNumber = random(4);
+    }
+    switch (randomNumber) {
+      case 0:
+        {
+          displayMatrix(arrowUp);
+          break;
+        }
+      case 1:
+        {
+          displayMatrix(arrowDown);
+          break;
+        }
+      case 2:
+        {
+          displayMatrix(arrowLeft);
+          break;
+        }
+      case 3:
+        {
+          displayMatrix(arrowRight);
+          break;
+        }
+    }
+    checkDisplay = 1;
+    previousRandomNumber = randomNumber;
+    lastTime = millis();
+  }
+}
+
+
+
+const int joyX = A0;
+const int joyY = A1;
+int prevX = 0, prevY = 0, posX = 0, posY = 0;
+int valX, valY;
+boolean movedX = false, movedY = false;
+
+int score = 0;
+
+void arrowGame(int intervalDisplayArrow) {
+  displayRandomArrow(intervalDisplayArrow);
+  valX = analogRead(joyY);
+  valY = analogRead(joyX);
+
+  if (valY > 600 && randomNumber == 1)
+  {
+    if (movedY == false)
+    {
+      if (checkDisplay == 1) {
+        score++;
+        checkDisplay = 0;
+      }
+      movedY = true;
+    }
+        else movedY = false;
+  }
+  
+  else if (valY < 400  && randomNumber == 0){
+      if (movedY == false)
+      {
+        if (checkDisplay == 1) {
+          score++;
+          checkDisplay = 0;
+        }
+        movedY = true;
+      }
+    else movedY = false;
+  }
+
+  else if (valX < 400  && randomNumber == 2)
+  { 
+    if (movedX == false)
+    {
+      if (checkDisplay == 1) {
+        score++;
+        checkDisplay = 0;
+      }
+      movedX = true;
+    }
+    else movedX = false;
+  }
+  else if (valX > 600  && randomNumber == 3)
+    {
+      if (movedX == false)
+      {
+        if (checkDisplay == 1) {
+          score++;
+          checkDisplay = 0;
+        }
+        movedX = true;
+      }
+    
+    else movedX = false;
+  }
+
+    lcd.setCursor(0, 1);
+    lcd.print("Score: ");
+    lcd.print(score);
+    lcd.print("             ");
+   
+}
+
+unsigned long startArrowGameTime, endArrowGameTime;
+int getReadyInterval = 1000;
+unsigned long getReadyTime = 0;
+
+void startArrowGame(int intervalDisplayArrow, int arrowGameTime) {
+      getReadyTime = millis();
+      while( millis() - getReadyTime <= getReadyInterval){
+      lcd.setCursor(0, 0);
+      lcd.print("Get ready to         ");
+      lcd.setCursor(0, 1);
+      lcd.print("stir in 3        ");
+      }
+      getReadyTime = millis();
+            while( millis() - getReadyTime <= getReadyInterval){
+      lcd.setCursor(0, 0);
+      lcd.print("Get ready to         ");
+      lcd.setCursor(0, 1);
+      lcd.print("stir in 3 2       ");
+      }
+            getReadyTime = millis();
+            while( millis() - getReadyTime <= getReadyInterval){
+      lcd.setCursor(0, 0);
+      lcd.print("Get ready to         ");
+      lcd.setCursor(0, 1);
+      lcd.print("stir in 3 2 1      ");
+      }
+      lcd.setCursor(0, 0);
+      lcd.print("Stir the potion!  ");
+  startArrowGameTime = millis();
+  endArrowGameTime = startArrowGameTime;
+  while ( endArrowGameTime - startArrowGameTime < arrowGameTime) {
+    arrowGame(intervalDisplayArrow); //checks if the joystick is moved in the arrows' direction
+    endArrowGameTime = millis();
+  }
+  displayMatrix(clearMatrix);
+
+}
+
+const int joySW = 52;
+int swValue = 1;
+int swState = 0;
+
+void swPressed() {
+  swValue = digitalRead(joySW);
+  if (swValue == LOW) {
+    swState = 1;
+    displayMatrix(clearMatrix);
+  }
+  else swState = 0;
+}
+
+int level1Check = 0;
+int level2Check = 0;
+int level3Check = 0;
+int level4Check = 0;
+int level5Check = 0;
+int potionTries = 0;
+int correctPotion = 0;
+
+int message = 0;
+
+int lastSwState = 1;
+void messageCounter() {
+  swState = digitalRead(joySW);
+  if (swState != lastSwState)
+    if (swState == LOW) {
+      message++;
+    }
+  lastSwState = swState;
+}
+
+int gameOver = 0;
+
+void level1() {
+  while (message != 7) {
+    messageCounter();
+       if (message == 0) {
+      lcd.setCursor(0, 0);
+      lcd.print("The first client    ");
+      lcd.setCursor(0, 1);
+      lcd.print("comes in...        ");
+    }
+    if (message == 1) {
+      lcd.setCursor(0, 0);
+      lcd.print("Marcus:Good       ");
+      lcd.setCursor(0, 1);
+      lcd.print("afternoon! ");
+    }
+    if (message == 2) {
+      lcd.setCursor(0, 0);
+      lcd.print("M:I am very sad.     ");
+      lcd.setCursor(0, 1);
+      lcd.print("W:Why is that?  ");
+    }
+
+    if (message == 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:I am single    ");
+      lcd.setCursor(0, 1);
+      lcd.print("and lonely.   ");
+    }
+    if (message == 4) {
+      lcd.setCursor(0, 0);
+      lcd.print("W:We can get you          ");
+      lcd.setCursor(0, 1);
+      lcd.print("a girlfriend!     ");
+    }
+    if (message == 5) {
+      lcd.setCursor(0, 0);
+      lcd.print("M:Really? I hope  ");
+      lcd.setCursor(0, 1);
+      lcd.print("so!           ");
+    }
+        if (message == 6) {
+      lcd.setCursor(0, 0);
+      lcd.print("W:Just wait here  ");
+      lcd.setCursor(0, 1);
+      lcd.print("a few minutes!       ");
+    }
+    if (message == 7) {
+      lcd.setCursor(0, 0);
+      lcd.print("Choosing         ");
+      lcd.setCursor(0, 1);
+      lcd.print("ingredients...");
+    }
+    }
+    
+  chooseIngredients();
+  if (redCheck == 1 && yellowCheck == 1 && whiteCheck == 1 && potionTries < 3) {
+    startArrowGame(1200, 6200);
+    redCheck = 0;
+    yellowCheck = 0;
+    whiteCheck = 0;
+    correctPotion = 1;
+  }
+    else {
+      lcd.setCursor(0, 0);
+      lcd.print("Wrong! Try again! ");
+    potionTries++;
+      lcd.setCursor(0, 1);
+      lcd.print(3-potionTries);
+      lcd.print(" tries left");
+    redCheck = 0;
+    blueCheck = 0;
+    whiteCheck = 0;
+    yellowCheck = 0;
+    greenCheck = 0;
+    swValue = 1;
+    delay(1000);   // used so the last potion used won't be the first in the next one
+  }
+
+  while (swValue != 0 && correctPotion == 1) {
+     lcd.setCursor(0, 0);
+      lcd.print("Congratulations!       ");
+      lcd.setCursor(0, 1);
+      lcd.print("You won 5 points");
+    level1Check = 1;
+    level2Check = 1;
+    displayMatrix(heart);
+    swPressed();
+  }
+
+  while (swValue != 0 && potionTries >= 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("You've failed to  ");
+      lcd.setCursor(0, 1);
+      lcd.print("make the potion");
+      turnLEDsOn();
+    level2Check = 0;
+    displayMatrix(sadFace);
+    swPressed();
+        gameOver = 1;
+  }
+
+  if (correctPotion == 1) {
+    swValue = 1;
+    correctPotion = 0;
+    turnLEDsOn();
+    message = 0;
+    score += 5;
+    score += (2 - potionTries) * 2;
+    potionTries = 0;
+  }
+}
+
+void level2() {
+  while (message != 5) {
+    messageCounter();
+    if (message == 0) {
+      lcd.setCursor(0, 0);
+      lcd.print("Ana:Hello witch! ");
+      lcd.setCursor(0, 1);
+      lcd.print("                ");
+    }
+    if (message == 1) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:I miss my     ");
+      lcd.setCursor(0, 1);
+      lcd.print("grandmother. ");
+    }
+
+    if (message == 2) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:I wish I could ");
+      lcd.setCursor(0, 1);
+      lcd.print("see her.        ");
+    }
+    if (message == 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("Witch:As a          ");
+      lcd.setCursor(0, 1);
+      lcd.print("ghost?     ");
+    }
+    if (message == 4) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:Yes.           ");
+      lcd.setCursor(0, 1);
+      lcd.print("W:Right away!");
+    }
+    if (message == 5) {
+      lcd.setCursor(0, 0);
+      lcd.print("Choosing  ");
+      lcd.setCursor(0, 1);
+      lcd.print("ingredients...");
+    }
+    }
+
+  chooseIngredients();
+  if (redCheck == 1 && blueCheck == 1 && whiteCheck == 1 && potionTries < 3) {
+    startArrowGame(1050, 5400);
+    redCheck = 0;
+    blueCheck = 0;
+    whiteCheck = 0;
+    correctPotion = 1;
+  }
+  else {
+      lcd.setCursor(0, 0);
+      lcd.print("Wrong! Try again! ");
+    potionTries++;
+      lcd.setCursor(0, 1);
+      lcd.print(3-potionTries);
+      lcd.print(" tries left");
+    redCheck = 0;
+    blueCheck = 0;
+    whiteCheck = 0;
+    yellowCheck = 0;
+    greenCheck = 0;
+    delay(1000);   
+  }
+
+  
+  while (swValue != 0 && correctPotion == 1) {
+    displayMatrix(ghost);
+      lcd.setCursor(0, 0);
+      lcd.print("It worked!       ");
+      lcd.setCursor(0, 1);
+      lcd.print("You won 8 points");
+    swPressed();
+    level2Check = 0;
+    level3Check = 1;
+   // Serial.println(score);
+  }
+
+  while (swValue != 0 && potionTries >= 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("You've failed to  ");
+      lcd.setCursor(0, 1);
+      lcd.print("make the potion");
+      turnLEDsOn();
+    level1Check = 1;
+    displayMatrix(sadFace);
+    swPressed();
+    gameOver = 1;
+  }
+
+  if (correctPotion == 1) {
+    swValue = 1;
+    correctPotion = 0;
+    turnLEDsOn();
+    message = 0;
+    potionTries = 0;
+    score += 8;
+    score += (2 - potionTries) * 2;
+  }
+}
+
+void level3() {
+  while (message != 6) {
+    messageCounter();
+       if (message == 0) {
+      lcd.setCursor(0, 0);
+      lcd.print("Another client    ");
+      lcd.setCursor(0, 1);
+      lcd.print("arrives...        ");
+    }
+    if (message == 1) {
+      lcd.setCursor(0, 0);
+      lcd.print("Adam:Long time   ");
+      lcd.setCursor(0, 1);
+      lcd.print("no see! ");
+    }
+    if (message == 2) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:I need your     ");
+      lcd.setCursor(0, 1);
+      lcd.print("help, again.  ");
+    }
+
+    if (message == 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:My dear dog     ");
+      lcd.setCursor(0, 1);
+      lcd.print("passed away      ");
+    }
+    if (message == 4) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:Could you get ");
+      lcd.setCursor(0, 1);
+      lcd.print("me a new pet?        ");
+    }
+    if (message == 5) {
+      lcd.setCursor(0, 0);
+      lcd.print("W:A new dog?    ");
+      lcd.setCursor(0, 1);
+      lcd.print("A:Yes, please!           ");
+    }
+
+        if (message == 6) {
+      lcd.setCursor(0, 0);
+      lcd.print("Choosing             ");
+      lcd.setCursor(0, 1);
+      lcd.print("ingredients...");
+    }
+  }
+    
+  chooseIngredients();
+  if (greenCheck == 1 && yellowCheck == 1 && whiteCheck == 1) {
+    startArrowGame(900, 4700);
+    greenCheck = 0;
+    yellowCheck = 0;
+    whiteCheck = 0;
+    correctPotion = 1;
+  }
+    else {
+      lcd.setCursor(0, 0);
+      lcd.print("Wrong! Try again! ");
+    potionTries++;
+      lcd.setCursor(0, 1);
+      lcd.print(3-potionTries);
+      lcd.print(" tries left");
+    redCheck = 0;
+    blueCheck = 0;
+    whiteCheck = 0;
+    yellowCheck = 0;
+    greenCheck = 0;
+    delay(1000);   
+  }
+
+  while (swValue != 0 && correctPotion == 1) {
+     lcd.setCursor(0, 0);
+      lcd.print("You earned 11          ");
+      lcd.setCursor(0, 1);
+      lcd.print("extra points!      ");
+    level3Check = 0;
+    level4Check = 1;
+    displayMatrix(dog);
+    swPressed();
+  }
+
+  while (swValue != 0 && potionTries >= 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("You've failed to  ");
+      lcd.setCursor(0, 1);
+      lcd.print("make the potion");
+      turnLEDsOn();
+    level2Check = 0;
+    displayMatrix(sadFace);
+    swPressed();
+    gameOver = 1;
+  }
+
+  if (correctPotion == 1) {
+    swValue = 1;
+    correctPotion = 0;
+    turnLEDsOn();
+    message = 0;
+    score += 11;
+    score += (2 - potionTries) * 2;
+    potionTries = 0;
+  }
+}
+
+void level4() {
+  while (message != 8) {
+    messageCounter();
+       if (message == 0) {
+      lcd.setCursor(0, 0);
+      lcd.print("Another client    ");
+      lcd.setCursor(0, 1);
+      lcd.print("arrives...        ");
+    }
+    if (message == 1) {
+      lcd.setCursor(0, 0);
+      lcd.print("Amy:Hello           ");
+      lcd.setCursor(0, 1);
+      lcd.print("sorceress! ");
+    }
+    if (message == 2) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:Our forests      ");
+      lcd.setCursor(0, 1);
+      lcd.print("are being cut.     ");
+    }
+    if (message == 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:The people are     ");
+      lcd.setCursor(0, 1);
+      lcd.print("so mad.        ");
+    }
+    if (message == 4) {
+      lcd.setCursor(0, 0);
+      lcd.print("A:I don't know     ");
+      lcd.setCursor(0, 1);
+      lcd.print("what to do.      ");
+    }
+    if (message == 5) {
+      lcd.setCursor(0, 0);
+      lcd.print("W:I might have  ");
+      lcd.setCursor(0, 1);
+      lcd.print("an idea!        ");
+    }
+    if (message == 6) {
+      lcd.setCursor(0, 0);
+      lcd.print("W:I'll make you    ");
+      lcd.setCursor(0, 1);
+      lcd.print("money to hire           ");
+    }
+        if (message == 7) {
+      lcd.setCursor(0, 0);
+      lcd.print("people to        ");
+      lcd.setCursor(0, 1);
+      lcd.print("plant trees!           ");
+    }
+
+        if (message == 8) {
+      lcd.setCursor(0, 0);
+      lcd.print("Choosing             ");
+      lcd.setCursor(0, 1);
+      lcd.print("ingredients...  ");
+    }
+  }
+    chooseIngredients();
+  if (greenCheck == 1 && yellowCheck == 1 && blueCheck == 1) {
+    startArrowGame(900, 4700);
+    greenCheck = 0;
+    yellowCheck = 0;
+    blueCheck = 0;
+    correctPotion = 1;
+  }
+    else {
+      lcd.setCursor(0, 0);
+      lcd.print("Wrong! Try again! ");
+    potionTries++;
+      lcd.setCursor(0, 1);
+      lcd.print(3-potionTries);
+      lcd.print(" tries left");
+    redCheck = 0;
+    blueCheck = 0;
+    whiteCheck = 0;
+    yellowCheck = 0;
+    greenCheck = 0;
+    delay(1000);   
+  }
+
+  while (swValue != 0 && correctPotion == 1) {
+     lcd.setCursor(0, 0);
+      lcd.print("Hooray!         ");
+      lcd.setCursor(0, 1);
+      lcd.print("You won 14 points");
+    level4Check = 0;
+    level5Check = 1;
+    displayMatrix(money);
+    swPressed();
+  }
+
+  while (swValue != 0 && potionTries >= 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("You've failed to  ");
+      lcd.setCursor(0, 1);
+      lcd.print("make the potion");
+      turnLEDsOn();
+    level2Check = 0;
+    displayMatrix(sadFace);
+    swPressed();
+    gameOver = 1;
+  }
+
+  if (correctPotion == 1) {
+    swValue = 1;
+    correctPotion = 0;
+    turnLEDsOn();
+    message = 0;
+    score += 14;
+    score += (2 - potionTries) * 2;
+    potionTries = 0;
+  }
+}
+
+  void level5() {
+  while (message != 6) {
+    messageCounter();
+       if (message == 0) {
+      lcd.setCursor(0, 0);
+      lcd.print("The last client of   ");
+      lcd.setCursor(0, 1);
+      lcd.print("the day is here...        ");
+    }
+    if (message == 1) {
+      lcd.setCursor(0, 0);
+      lcd.print("Luke:Good           ");
+      lcd.setCursor(0, 1);
+      lcd.print("evening!         ");
+    }
+    if (message == 2) {
+      lcd.setCursor(0, 0);
+      lcd.print("K:My passion is     ");
+      lcd.setCursor(0, 1);
+      lcd.print("music.           ");
+    }
+
+    if (message == 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("K:Sadly, my     ");
+      lcd.setCursor(0, 1);
+      lcd.print("voice is awful.      ");
+    }
+    if (message == 4) {
+      lcd.setCursor(0, 0);
+      lcd.print("W:My powers can ");
+      lcd.setCursor(0, 1);
+      lcd.print("help anyone!       ");
+    }
+    if (message == 5) {
+      lcd.setCursor(0, 0);
+      lcd.print("I'm glad they      ");
+      lcd.setCursor(0, 1);
+      lcd.print("do!           ");
+    }
+
+        if (message == 6) {
+      lcd.setCursor(0, 0);
+      lcd.print("Choosing             ");
+      lcd.setCursor(0, 1);
+      lcd.print("ingredients...");
+    }
+  }
+    
+  chooseIngredients();
+  if (redCheck == 1 && blueCheck == 1 && yellowCheck == 1) {
+    startArrowGame(650, 3400);
+    redCheck = 0;
+    yellowCheck = 0;
+    blueCheck = 0;
+    correctPotion = 1;
+  }
+    else {
+      lcd.setCursor(0, 0);
+      lcd.print("Wrong! Try again! ");
+    potionTries++;
+      lcd.setCursor(0, 1);
+      lcd.print(3-potionTries);
+      lcd.print(" tries left");
+    redCheck = 0;
+    blueCheck = 0;
+    whiteCheck = 0;
+    yellowCheck = 0;
+    greenCheck = 0;
+    delay(1000);   
+  }
+
+  while (message != 9 && correctPotion == 1) {
+    messageCounter();
+    if(message == 6){
+     lcd.setCursor(0, 0);
+      lcd.print("17 more points  ");
+      lcd.setCursor(0, 1);
+      lcd.print("for you!         ");
+    displayMatrix(music);
+    gameOver = 1;
+    }
+    
+    if(message == 7){
+           lcd.setCursor(0, 0);
+      lcd.print("You finished the         ");
+      lcd.setCursor(0, 1);
+      lcd.print("game! Congrats! ");
+    }
+
+    if(message == 8){
+           lcd.setCursor(0, 0);
+      lcd.print("Your score is         ");
+      lcd.setCursor(0, 1);
+      lcd.print(score);
+      lcd.print("                   ");
+    }
+  }
+
+  while (swValue != 0 && potionTries >= 3) {
+      lcd.setCursor(0, 0);
+      lcd.print("You've failed to  ");
+      lcd.setCursor(0, 1);
+      lcd.print("make the potion");
+      turnLEDsOn();
+    level2Check = 0;
+    displayMatrix(sadFace);
+    swPressed();
+    gameOver = 1;
+  }
+
+  if (correctPotion == 1) {
+    swValue = 1;
+    correctPotion = 0;
+    turnLEDsOn();
+    message = 0;
+    score += 17;
+    score += (2 - potionTries) * 2;
+    potionTries = 0;
+  }
+}
+
+int introCheck = 0;
+
+void intro() {
+  messageCounter();
+  if (message == 0) {
+    lcd.setCursor(0, 0);
+    lcd.print("You are a witch.");
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
+  }
+  if (message == 1) {
+    lcd.setCursor(0, 0);
+    lcd.print("You make potions");
+    lcd.setCursor(0, 1);
+    lcd.print("to help people.");
+  }
+  if (message == 2) {
+    lcd.setCursor(0, 0);
+    lcd.print("Your ingredients are:");
+    lcd.setCursor(0, 1);
+    lcd.print("are these:     ");
+  }
+  if (message == 3) {
+    lcd.setCursor(0, 0);
+    lcd.print("Love(red)       ");
+    lcd.setCursor(0, 1);
+    lcd.print("Mistery(blue) ");
+  }
+  if (message == 4) {
+    lcd.setCursor(0, 0);
+    lcd.print("Nature(green)      ");
+    lcd.setCursor(0, 1);
+    lcd.print("Joy(yellow)       ");
+  }
+  if (message == 5) {
+    lcd.setCursor(0, 0);
+    lcd.print("and the last one ");
+    lcd.setCursor(0, 1);
+    lcd.print("Hope(white)       ");
+  }
+  if (message == 6) {
+    lcd.setCursor(0, 0);
+    lcd.print("Are you ready to ");
+    lcd.setCursor(0, 1);
+    lcd.print("start? :)    ");
+  }
+  if (message == 7) {
+    introCheck = 1;
+    lcd.clear();
+    message = 0;
+    swValue = 1;
+  }
+}
+
+void mainMenu() {
+  lcd.setCursor(1, 0);
+  lcd.print("Start ");
+  lcd.setCursor(8, 0);
+  lcd.print("HScore  ");
+  lcd.setCursor(1, 1);
+  lcd.print("Settings       ");
+}
+
+int cursorPosition = 0;
+
+void cursor() {
+  lcd.setCursor(0, 0);
+  lcd.print(" ");
+  lcd.setCursor(7, 0);
+  lcd.print(" ");
+  lcd.setCursor(0, 1);
+  lcd.print(" ");
+
+
+  if (cursorPosition < 0) cursorPosition = 2;
+  if (cursorPosition > 2) cursorPosition = 0;
+  if (cursorPosition == 0) lcd.setCursor(0, 0);
+  else if (cursorPosition == 1) lcd.setCursor(7, 0);
+  else if (cursorPosition == 2) lcd.setCursor(0, 1);
+  lcd.print(">");
+
+}
+
+int buttonState = 0;
+unsigned long lastSwTime = 0;
+unsigned long currentTime = 0;
+const int IntervalSwitches = 200;
+
+const int IntervalLevel = 4000;
+const int IntervalGame = 10000;
+int highScore;
+int lives = 3;
+int checkGame = 0;
+int checkScore = 0;
+int checkFinishedGame = 0;
+int namePosition = 0;
+int specificLetter[3] = {0,0,0};
+char letters[3]={'A','B','C'};
+
+void buttonPressed() {
+  if (swValue == 0 && currentTime - lastSwTime >= IntervalSwitches) {
+    if (buttonState == 0) {
+      buttonState = 1;
+    }
+    else {
+      buttonState = 0;
+    }
+    lastSwTime = currentTime;
+  }
+}
+
+void lcdMenu(){
+
+}
+
+int minThreshold = 400;
+int maxThreshold = 600;
+
+
+void setup() {
+  lcd.begin(16, 2);
+  lcd.clear();
+  lc.shutdown(0, false); 
+  lc.setIntensity(0, 0.5); 
+  lc.clearDisplay(0); 
+  Serial.begin(9600);
+  pinMode(redButton, INPUT_PULLUP);
+  pinMode(blueButton, INPUT_PULLUP);
+  pinMode(greenButton, INPUT_PULLUP);
+  pinMode(yellowButton, INPUT_PULLUP);
+  pinMode(whiteButton, INPUT_PULLUP);
+  pinMode(helpButton, INPUT_PULLUP);
+  pinMode(joySW, INPUT_PULLUP);
+  pinMode(redLED, OUTPUT);
+  pinMode(blueLED, OUTPUT);
+  pinMode(greenLED, OUTPUT);
+  pinMode(yellowLED, OUTPUT);
+  pinMode(whiteLED, OUTPUT);
+  lcd.createChar(0, customChar);
+
+}
+
+
+
+void loop() {
+  currentTime = millis();
+  swValue = digitalRead(joySW);
+
+  buttonPressed();
+
+  if (buttonState == 0) {
+    mainMenu();
+    checkGame = 0;
+    checkScore = 0;
+    gameOver = 0;
+    level1Check = 0;
+    level2Check = 0;
+    level3Check = 0;
+    level4Check = 0;
+    level5Check = 0;
+    potionTries = 0;
+    message = -1;
+    checkFinishedGame = 0; //it resets the game so you can play again
+    valX = analogRead(joyY);
+    if (valX < minThreshold && movedX == true) {
+      cursorPosition++;
+      cursor();
+      movedX = false;
+    }
+
+    if (valX > maxThreshold && movedX == true) {
+      cursorPosition--;
+      cursor();
+      movedX = false;
+    }
+    if (valX >= minThreshold && valX <= maxThreshold) {
+      movedX = true;
+      cursor();
+    }
+  }
+  else
+  {
+    if (cursorPosition == 0) {
+      while (gameOver == 0){
+        turnLEDsOn();
+  if (introCheck == 0) intro();
+  if (level1Check == 0 && introCheck == 1) level1();
+  if(level2Check == 1) level2();
+  if(level3Check == 1) level3();
+  if(level4Check == 1) level4();
+  if(level5Check == 1) level5();
+      }
+      if (score > highScore){ highScore = score;
+       lcd.setCursor(0, 0);
+      lcd.print("You've made it  ");
+      lcd.setCursor(0, 1);
+      lcd.print("to HighScore");
+      lcd.print("      ");
+      EEPROM.write(addressScore, highScore);
+     // EEPROM.write(addressName, 3);
+     // for (int i = 0; i < 3; i++)
+      //EEPROM.write(addressName + 1 + i, letters[i]);
+      delay(1500); // displays the message, similar to a loading screen
+      }
+    } 
+
+    else if (cursorPosition == 1) {
+      lcd.setCursor(0, 0);
+      lcd.print("High Score: ");
+          highScore = EEPROM.read(addressScore);
+      lcd.print(highScore);
+      lcd.print("  ");
+      lcd.setCursor(0, 1);
+      lcd.print("Name: ");
+      
+  //      for (int i = 0; i < 3; i++)
+  //  letters[i] = EEPROM.read(addressName + 1 + i);
+  
+      lcd.print(letters);
+      lcd.setCursor(9, 1);
+      lcd.print("              ");
+    }
+    else if (cursorPosition == 2){
+      
+      lcd.setCursor(0, 0);
+      lcd.write(byte(0));
+      lcd.write(byte(0));
+      lcd.write(byte(0));
+      lcd.write(byte(0));
+      lcd.write(byte(0));
+      lcd.print("Name: ");
+      lcd.setCursor(14, 0);
+      lcd.print("     ");
+      lcd.setCursor(0, 1);
+      lcd.print("Intro: ");
+      if(introState == 0){
+        if(introCheck == 1)
+        lcd.print("OFF");
+        else lcd.print("ON");
+      }
+      lcd.setCursor(10, 1);
+      lcd.print("             ");
+          valX = analogRead(joyY);
+    if (valX < minThreshold && movedX == true) {
+      namePosition++;
+      movedX = false;
+    }
+
+    if (valX > maxThreshold && movedX == true) {
+      namePosition--;
+      movedX = false;
+    }
+    if (valX >= minThreshold && valX <= maxThreshold) {
+      movedX = true;
+    }
+    if(namePosition > 3) namePosition = 3;
+    if(namePosition < 0) namePosition = 0;
+
+          valY = analogRead(joyX);
+    if (valY < minThreshold && movedY == true) {
+      letters[namePosition]++;
+      movedY = false;
+    }
+
+    if (valY > maxThreshold && movedY == true) {
+    letters[namePosition]--;
+      movedY = false;
+    }
+    if (valY >= minThreshold && valY <= maxThreshold) {
+      movedY = true;
+    }
+
+    
+    if(letters[namePosition] > 'Z') letters[namePosition] = 'A';
+    if(letters[namePosition] < 'A') letters[namePosition] = 'Z';
+
+    if(namePosition == 3){
+      introState = 1;
+      movedY = true;
+                valY = analogRead(joyX);
+    if (valY < minThreshold && movedY == true) {
+      Serial.println("da?");
+      introCheck = 0;
+      movedY = false;
+    }
+
+    Serial.print(valY);
+    Serial.print("  ");
+    Serial.println(movedY);
+    if (valY > maxThreshold && movedY == true) {
+    introCheck = 1;
+    Serial.println("da?");
+      movedY = false;
+    }
+    if (valY >= minThreshold && valY <= maxThreshold) {
+      movedY = true;
+    }
+      
+      lcd.setCursor(7, 1);
+      if(introCheck == 1) lcd.print("OFF<");
+      if(introCheck == 0) lcd.print("ON <");
+    }
+        
+        lcd.setCursor(11, 0);
+        lcd.print(letters[0]);
+        lcd.setCursor(12, 0);
+        lcd.print(letters[1]);
+        lcd.setCursor(13, 0);
+        lcd.print(letters[2]);
+        if(namePosition == 0){
+        lcd.setCursor(11, 1);
+        lcd.print("^");}
+        if(namePosition == 1){
+        lcd.setCursor(12, 1);
+        lcd.print("^");}
+        if(namePosition == 2){
+        lcd.setCursor(13, 1);
+        lcd.print("^");}
+      }  
+    }
+  }
