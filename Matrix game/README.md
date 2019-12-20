@@ -33,3 +33,5 @@ If you go to 'Settings' you will be able to choose a three letter name and if yo
 - 2 capacitors
 - 7 resistors
 - 1 potentiometer
+
+![alt text](https://drive.google.com/drive/u/0/my-drive)
