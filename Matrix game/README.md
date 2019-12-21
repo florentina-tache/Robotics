@@ -35,7 +35,7 @@ If you go to 'Settings' you will be able to choose a three letter name and if yo
 - 1 potentiometer
 
 Image:
-![Hardware_Components](https://ibb.co/JnHrhpc)
+![Hardware_Components](https://i.ibb.co/cJQ2m8y/Whats-App-Image-2019-12-21-at-16-33-34.jpg)
 
 Functionalities:
 https://youtu.be/sCYzFXS1PD0
