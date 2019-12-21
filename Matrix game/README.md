@@ -35,8 +35,10 @@ If you go to 'Settings' you will be able to choose a three letter name and if yo
 - 1 potentiometer
 
 Image:
-https://drive.google.com/open?id=1ARI20ZJTNUk-2hJSr2F9gQnhk4O67FMO
+![Hardware_Components](https://ibb.co/JnHrhpc)
 
 Functionalities:
+https://youtu.be/sCYzFXS1PD0
 
 Full story/gameplay:
+https://youtu.be/gT0uWntOKK0
