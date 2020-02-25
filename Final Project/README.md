@@ -12,5 +12,8 @@ The photodiode is used to measure the quantity of light projected upon it. The q
 I have used the charger to power the bug but the battery can also be used.
 
 Images:
-![Hardware_components](https://ibb.co/b3KpJ9T.jpg)
-![Hardware_components2](https://ibb.co/Vj8djtp.jpg)
+![Hardware_components](<a href="https://ibb.co/Vj8djtp"><img src="https://i.ibb.co/bWnxWPR/e2abeac3-11e1-440f-a4aa-cb1a7b61ca58.jpg" alt="e2abeac3-11e1-440f-a4aa-cb1a7b61ca58" border="0"></a>)
+![Hardware_components2](<a href="https://ibb.co/b3KpJ9T"><img src="https://i.ibb.co/cvrzLn0/0e93f92d-b5aa-4ac1-befb-41268590e722.jpg" alt="0e93f92d-b5aa-4ac1-befb-41268590e722" border="0"></a>)
+
+Video:
+https://www.youtube.com/watch?v=5FIK7iwdw-M
