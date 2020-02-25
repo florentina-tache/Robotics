@@ -1,0 +1,69 @@
+#include <Servo.h>
+int FRONT = 12;
+int BACK = 11;
+const int photoCellPin = A0;
+int photoCellValue = 0;
+int Delay = 100;
+const int buzzerPin = 10;
+int buzzerTone = 1000;
+int minPitch = 120;
+int maxPitch = 1500;
+int minPhotoCellValue = 0;
+int maxPhotoCellValue = 150;
+Servo frontLegs, backLegs;
+
+
+void goRight(){
+    delay(200);
+  frontLegs.write(95);        
+  delay(Delay);
+  backLegs.write(75);         
+  delay(Delay);
+  frontLegs.write(105);      
+  delay(Delay);
+  backLegs.write(115);    
+}
+
+void goLeft()
+{
+  delay(Delay);
+  frontLegs.write(90);        
+  delay(Delay);
+  backLegs.write(40);         
+  delay(Delay);
+  frontLegs.write(105);      
+  delay(Delay);
+  backLegs.write(55);
+}
+
+void goForward(){
+  delay(Delay);
+  frontLegs.write(80);        
+  delay(Delay);
+  backLegs.write(70);         
+  delay(Delay);
+  frontLegs.write(95);      
+  delay(Delay);
+  backLegs.write(80);    
+  }
+
+
+void setup(){
+  frontLegs.attach(FRONT); 
+  backLegs.attach(BACK);
+  frontLegs.write(90); //center the front servo
+  backLegs.write(90);  //center the back servo
+  Serial.begin(9600);
+}
+
+void loop() {
+photoCellValue = analogRead(photoCellPin);
+Delay=map(photoCellValue, 0, 350, 350, 0);
+Serial.println(photoCellValue);
+if(millis() < 50000) goForward();
+if(millis()>= 5000 && millis() < 10000) goRight();
+if(millis()>= 10000) goLeft();
+buzzerTone = map(photoCellValue, minPhotoCellValue,
+maxPhotoCellValue, minPitch, maxPitch);
+tone(buzzerPin, buzzerTone, 500);
+}
